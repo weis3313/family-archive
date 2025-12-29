@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>家庭相片數位典藏（展場版）</title>
+  <style>
+    :root{
+      --bg:#0b0c10; --panel:#12141b; --panel2:#171a22;
+      --text:#e9edf1; --muted:#a7b0bb; --line:#2a2f3a;
+      --accent:#6aa6ff; --danger:#ff6a6a; --ok:#7dffb2;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:var(--sans); background:linear-gradient(180deg,#07080b, #0b0c10 30%, #0b0c10);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(11,12,16,.75);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding:18px 18px;}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+    h1{font-size:18px; margin:0; letter-spacing:.5px}
+    .badge{font-family:var(--mono); font-size:12px; color:var(--muted); border:1px solid rgba(255,255,255,.10);
+      padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.03);
+    }
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:14px;
+    }
+    input[type="text"], input[type="date"], textarea, select{
+      width:100%; padding:10px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03); color:var(--text);
+      outline:none;
+    }
+    textarea{min-height:90px; resize:vertical;}
+    .btn{
+      padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05); color:var(--text); cursor:pointer;
+      transition: .15s ease;
+      display:inline-flex; gap:8px; align-items:center; justify-content:center;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.2)}
+    .btn.primary{background: rgba(106,166,255,.16); border-color: rgba(106,166,255,.35)}
+    .btn.danger{background: rgba(255,106,106,.12); border-color: rgba(255,106,106,.35)}
+    .btn.ok{background: rgba(125,255,178,.12); border-color: rgba(125,255,178,.35)}
+    .grid{
+      display:grid; grid-template-columns: repeat(4, 1fr);
+      gap:12px; padding:14px;
+    }
+    @media (max-width: 1100px){ .grid{grid-template-columns: repeat(3, 1fr);} }
+    @media (max-width: 800px){ .grid{grid-template-columns: repeat(2, 1fr);} }
+    @media (max-width: 520px){ .grid{grid-template-columns: 1fr;} }
+    .card{
+      overflow:hidden; border-radius:14px; border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      cursor:pointer; min-height:220px;
+      display:flex; flex-direction:column;
+    }
+    .thumb{height:160px; background:#0f1117; display:flex; align-items:center; justify-content:center;}
+    .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+    .meta{padding:10px 10px 12px;}
+    .title{font-size:14px; line-height:1.3; margin:0 0 6px 0;}
+    .sub{font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap;}
+    .k{display:inline-flex; gap:6px; align-items:center}
+    .k span{font-family:var(--mono); font-size:11px; padding:2px 6px; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);}
+    .content{max-width:1200px; margin:14px auto 40px; padding:0 18px;}
+    .split{display:grid; grid-template-columns: 1.2fr .8fr; gap:14px; align-items:start;}
+    @media (max-width: 980px){ .split{grid-template-columns:1fr;} }
+    .form{padding:14px;}
+    .form h2{margin:0 0 12px 0; font-size:15px; color:var(--text);}
+    .form .hint{color:var(--muted); font-size:12px; margin:0 0 12px 0; line-height:1.5;}
+    .two{display:grid; grid-template-columns: 1fr 1fr; gap:10px;}
+    @media (max-width: 520px){ .two{grid-template-columns:1fr;} }
+    label{font-size:12px; color:var(--muted); display:block; margin:10px 0 6px;}
+    .hr{height:1px; background:rgba(255,255,255,.08); margin:12px 0;}
+    footer{color:var(--muted); font-size:12px; padding:20px 18px; text-align:center;}
+
+    /* modal */
+    .modal{
+      position:fixed; inset:0; background:rgba(0,0,0,.68);
+      display:none; align-items:center; justify-content:center; z-index:100;
+      padding:18px;
+    }
+    .modal.on{display:flex;}
+    .modalBox{
+      width:min(1100px, 100%); max-height: 92vh; overflow:auto;
+      background: linear-gradient(180deg, rgba(23,26,34,.95), rgba(18,20,27,.95));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px; box-shadow:var(--shadow);
+    }
+    .modalHead{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.08);
+      position:sticky; top:0; background: rgba(18,20,27,.92); backdrop-filter: blur(10px);
+    }
+    .modalHead .mTitle{font-size:14px; margin:0}
+    .modalBody{padding:14px;}
+    .detail{
+      display:grid; grid-template-columns: 1.1fr .9fr; gap:14px;
+    }
+    @media (max-width: 980px){ .detail{grid-template-columns:1fr;} }
+    .preview{
+      border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.10);
+      background:#0f1117;
+    }
+    .preview img{width:100%; height:100%; max-height:70vh; object-fit:contain; display:block; background:#0f1117;}
+    .kv{display:grid; grid-template-columns: 120px 1fr; gap:8px 12px; font-size:13px; align-items:start;}
+    .kv div{padding:6px 0; border-bottom:1px dashed rgba(255,255,255,.08)}
+    .kv .key{color:var(--muted)}
+    .small{font-size:12px; color:var(--muted); line-height:1.5}
+    .fileInput{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    input[type="file"]{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row" style="justify-content:space-between">
+        <div class="row" style="gap:10px">
+          <h1>家庭相片數位典藏（展場版）</h1>
+          <div class="badge" id="countBadge">0 items</div>
+        </div>
+        <div class="row">
+          <button class="btn" id="exportBtn" title="匯出 JSON（備份/移機）">匯出</button>
+          <label class="btn" title="匯入 JSON（從備份還原）" style="margin:0">
+            匯入 <input id="importInput" type="file" accept="application/json" hidden>
+          </label>
+          <button class="btn danger" id="wipeBtn" title="清空本機資料（小心）">清空</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <div class="toolbar">
+          <div style="flex:1; min-width:240px">
+            <input id="search" type="text" placeholder="搜尋：題名 / 描述 / 地點 / 人物 / 關鍵字…" />
+          </div>
+          <div class="fileInput">
+            <label class="btn primary" style="margin:0">
+              上傳照片（可多張）
+              <input id="photoInput" type="file" accept="image/*" multiple hidden>
+            </label>
+            <button class="btn ok" id="newBlankBtn" title="先建立一筆，稍後再補照片">新增空白記錄</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="split">
+      <div class="panel">
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <div class="panel">
+        <div class="form">
+          <h2>典藏欄位（快速輸入）</h2>
+          <p class="hint">
+            先點左側任一照片卡片，再在這裡填欄位。資料會自動儲存在此瀏覽器本機。
+            建議展前按右上角「匯出」做備份。
+          </p>
+
+          <div class="hr"></div>
+
+          <div class="two">
+            <div>
+              <label>題名（Title）</label>
+              <input id="f_title" type="text" placeholder="例：1999 年家族聚餐合照" />
+            </div>
+            <div>
+              <label>日期（Date）</label>
+              <input id="f_date" type="date" />
+            </div>
+          </div>
+
+          <div class="two">
+            <div>
+              <label>地點（Place）</label>
+              <input id="f_place" type="text" placeholder="例：新竹 / 外婆家 / 某某公園" />
+            </div>
+            <div>
+              <label>人物（People）</label>
+              <input id="f_people" type="text" placeholder="例：爸、媽、我、妹妹（以逗號分隔）" />
+            </div>
+          </div>
+
+          <label>關鍵字（Tags）</label>
+          <input id="f_tags" type="text" placeholder="例：過年, 團圓, 童年" />
+
+          <label>事件 / 描述（Description）</label>
+          <textarea id="f_desc" placeholder="可寫當時情境、你記得的細節、或你想對觀眾說的話。"></textarea>
+
+          <div class="two">
+            <div>
+              <label>來源（Source）</label>
+              <input id="f_source" type="text" placeholder="例：家裡相簿 / 底片掃描 / 長輩提供" />
+            </div>
+            <div>
+              <label>權利（Rights）</label>
+              <select id="f_rights">
+                <option value="">（未填）</option>
+                <option>家庭收藏（非商用）</option>
+                <option>可公開展示（需標示來源）</option>
+                <option>限制公開（僅展場）</option>
+              </select>
+            </div>
+          </div>
+
+          <label>備註（Note）</label>
+          <input id="f_note" type="text" placeholder="例：拍攝者不詳 / 日期推估 / 需向阿姨確認…" />
+
+          <div class="hr"></div>
+
+          <div class="row" style="justify-content:space-between">
+            <div class="small">
+              目前選取：<span id="selectedHint" style="font-family:var(--mono)">（未選取）</span>
+            </div>
+            <div class="row">
+              <button class="btn" id="viewBtn">檢視</button>
+              <button class="btn danger" id="deleteBtn">刪除</button>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+          <p class="small">
+            展場小技巧：Chrome 按 <span style="font-family:var(--mono)">F11</span> 全螢幕。
+            若要「更典藏感」，可把右側欄位當作「編目台」，由你或觀眾一起填寫。
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modalBox">
+      <div class="modalHead">
+        <p class="mTitle" id="mTitle" style="margin:0">檢視</p>
+        <div class="row">
+          <button class="btn" id="mClose">關閉</button>
+        </div>
+      </div>
+      <div class="modalBody">
+        <div class="detail">
+          <div class="preview"><img id="mImg" alt=""></div>
+          <div>
+            <div class="kv" id="mKV"></div>
+            <div class="hr"></div>
+            <div class="small" id="mId"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    本頁為展場離線版。資料儲存在本機瀏覽器（localStorage）。請定期「匯出」備份。
+  </footer>
+
+<script>
+(function(){
+  const STORAGE_KEY = "family_archive_v1";
+
+  /** @type {{items: Array<any>, selectedId: string|null}} */
+  let state = load() || { items: [], selectedId: null };
+
+  const el = (id) => document.getElementById(id);
+
+  const grid = el("grid");
+  const countBadge = el("countBadge");
+  const search = el("search");
+  const photoInput = el("photoInput");
+  const newBlankBtn = el("newBlankBtn");
+
+  const exportBtn = el("exportBtn");
+  const importInput = el("importInput");
+  const wipeBtn = el("wipeBtn");
+
+  const f = {
+    title: el("f_title"),
+    date: el("f_date"),
+    place: el("f_place"),
+    people: el("f_people"),
+    tags: el("f_tags"),
+    desc: el("f_desc"),
+    source: el("f_source"),
+    rights: el("f_rights"),
+    note: el("f_note"),
+  };
+
+  const selectedHint = el("selectedHint");
+  const viewBtn = el("viewBtn");
+  const deleteBtn = el("deleteBtn");
+
+  const modal = el("modal");
+  const mClose = el("mClose");
+  const mTitle = el("mTitle");
+  const mImg = el("mImg");
+  const mKV = el("mKV");
+  const mId = el("mId");
+
+  function uid(){
+    return "id_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  }
+
+  function nowISO(){
+    const d = new Date();
+    const pad = (n)=> String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){
+      alert("儲存失敗：可能是照片太大或筆數太多。\n建議：減少張數、先壓縮照片、或改用 IndexedDB 版本。");
+      console.error(e);
+    }
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){
+      console.error(e);
+      return null;
+    }
+  }
+
+  function summarize(item){
+    const title = item.title?.trim() || "（未命名）";
+    const date = item.date || "未填日期";
+    const place = item.place?.trim() || "未填地點";
+    return { title, date, place };
+  }
+
+  function normalizeText(s){ return (s || "").toString().toLowerCase(); }
+
+  function matchesQuery(item, q){
+    if(!q) return true;
+    const bag = [
+      item.title, item.date, item.place, item.people, item.tags, item.desc, item.source, item.rights, item.note
+    ].map(normalizeText).join(" ");
+    return bag.includes(q);
+  }
+
+  function render(){
+    const q = normalizeText(search.value).trim();
+    const items = state.items
+      .filter(it => matchesQuery(it, q))
+      .sort((a,b)=> (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+
+    countBadge.textContent = `${state.items.length} items`;
+    grid.innerHTML = "";
+
+    if(items.length === 0){
+      const empty = document.createElement("div");
+      empty.style.padding = "18px";
+      empty.style.color = "var(--muted)";
+      empty.style.gridColumn = "1 / -1";
+      empty.textContent = state.items.length === 0
+        ? "目前沒有資料。請按「上傳照片」或「新增空白記錄」。"
+        : "沒有符合搜尋條件的結果。";
+      grid.appendChild(empty);
+    }else{
+      for(const item of items){
+        const { title, date, place } = summarize(item);
+        const card = document.createElement("div");
+        card.className = "card";
+        card.title = "點擊選取 / 再點一次可檢視";
+        card.dataset.id = item.id;
+
+        const thumb = document.createElement("div");
+        thumb.className = "thumb";
+
+        if(item.imageDataUrl){
+          const img = document.createElement("img");
+          img.src = item.imageDataUrl;
+          img.alt = title;
+          thumb.appendChild(img);
+        }else{
+          const ph = document.createElement("div");
+          ph.style.color = "var(--muted)";
+          ph.style.fontFamily = "var(--mono)";
+          ph.textContent = "no image";
+          thumb.appendChild(ph);
+        }
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const h = document.createElement("p");
+        h.className = "title";
+        h.textContent = title;
+
+        const sub = document.createElement("div");
+        sub.className = "sub";
+        sub.innerHTML = `
+          <span class="k"><span>Date</span> ${escapeHtml(date)}</span>
+          <span class="k"><span>Place</span> ${escapeHtml(place)}</span>
+        `;
+
+        meta.appendChild(h);
+        meta.appendChild(sub);
+
+        card.appendChild(thumb);
+        card.appendChild(meta);
+
+        if(item.id === state.selectedId){
+          card.style.borderColor = "rgba(106,166,255,.55)";
+          card.style.boxShadow = "0 0 0 2px rgba(106,166,255,.18), var(--shadow)";
+        }
+
+        card.addEventListener("click", ()=>{
+          if(state.selectedId === item.id){
+            openModal(item.id);
+          }else{
+            select(item.id);
+          }
+        });
+
+        grid.appendChild(card);
+      }
+    }
+
+    syncForm();
+  }
+
+  function syncForm(){
+    const item = state.items.find(it => it.id === state.selectedId) || null;
+    selectedHint.textContent = item ? item.id : "（未選取）";
+
+    for(const key of Object.keys(f)){
+      f[key].value = item ? (item[key] || "") : "";
+      f[key].disabled = !item;
+    }
+    viewBtn.disabled = !item;
+    deleteBtn.disabled = !item;
+  }
+
+  function select(id){
+    state.selectedId = id;
+    save();
+    render();
+  }
+
+  function upsert(item){
+    const idx = state.items.findIndex(it => it.id === item.id);
+    if(idx >= 0) state.items[idx] = item;
+    else state.items.push(item);
+    save();
+    render();
+  }
+
+  function addBlank(){
+    const id = uid();
+    const item = {
+      id,
+      imageDataUrl: "",
+      title: "",
+      date: "",
+      place: "",
+      people: "",
+      tags: "",
+      desc: "",
+      source: "",
+      rights: "",
+      note: "",
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+    };
+    state.items.push(item);
+    state.selectedId = id;
+    save();
+    render();
+  }
+
+  function handleFiles(files){
+    const list = Array.from(files || []);
+    if(list.length === 0) return;
+
+    // 逐張讀，避免一次太卡
+    const queue = [...list];
+
+    const readNext = () => {
+      const file = queue.shift();
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const id = uid();
+        const item = {
+          id,
+          imageDataUrl: reader.result,
+          title: file.name.replace(/\.[^.]+$/, ""),
+          date: "",
+          place: "",
+          people: "",
+          tags: "",
+          desc: "",
+          source: "家中相片數位化",
+          rights: "家庭收藏（非商用）",
+          note: "",
+          createdAt: nowISO(),
+          updatedAt: nowISO(),
+        };
+        state.items.push(item);
+        state.selectedId = id;
+        save();
+        render();
+        readNext();
+      };
+      reader.onerror = () => {
+        alert("讀取照片失敗：" + file.name);
+        readNext();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    readNext();
+  }
+
+  function openModal(id){
+    const item = state.items.find(it => it.id === id);
+    if(!item) return;
+    const { title } = summarize(item);
+    mTitle.textContent = title;
+    mImg.src = item.imageDataUrl || "";
+    mImg.alt = title;
+
+    const rows = [
+      ["題名 Title", item.title],
+      ["日期 Date", item.date],
+      ["地點 Place", item.place],
+      ["人物 People", item.people],
+      ["關鍵字 Tags", item.tags],
+      ["事件/描述 Description", item.desc],
+      ["來源 Source", item.source],
+      ["權利 Rights", item.rights],
+      ["備註 Note", item.note],
+    ];
+
+    mKV.innerHTML = rows.map(([k,v]) => `
+      <div class="key">${escapeHtml(k)}</div>
+      <div>${escapeHtml(v || "")}</div>
+    `).join("");
+
+    mId.textContent = `ID: ${item.id} ｜ created: ${item.createdAt || ""} ｜ updated: ${item.updatedAt || ""}`;
+    modal.classList.add("on");
+  }
+
+  function closeModal(){
+    modal.classList.remove("on");
+  }
+
+  function deleteSelected(){
+    const id = state.selectedId;
+    if(!id) return;
+    const ok = confirm("確定要刪除這筆記錄？（不可復原）");
+    if(!ok) return;
+    state.items = state.items.filter(it => it.id !== id);
+    state.selectedId = null;
+    save();
+    render();
+  }
+
+  function exportJSON(){
+    const data = {
+      exportedAt: nowISO(),
+      version: 1,
+      items: state.items,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `family_archive_backup_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function importJSON(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(reader.result);
+        if(!data || !Array.isArray(data.items)) throw new Error("格式不正確");
+        state.items = data.items;
+        state.selectedId = data.items[0]?.id || null;
+        save();
+        render();
+        alert("匯入完成。");
+      }catch(e){
+        alert("匯入失敗：JSON 格式不正確。");
+        console.error(e);
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  function wipeAll(){
+    const ok = confirm("確定清空所有資料？建議先匯出備份。");
+    if(!ok) return;
+    state = { items: [], selectedId: null };
+    localStorage.removeItem(STORAGE_KEY);
+    render();
+  }
+
+  // escape
+  function escapeHtml(s){
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // events
+  search.addEventListener("input", render);
+
+  photoInput.addEventListener("change", (e)=>{
+    handleFiles(e.target.files);
+    e.target.value = ""; // allow re-upload same file
+  });
+
+  newBlankBtn.addEventListener("click", addBlank);
+
+  for(const key of Object.keys(f)){
+    f[key].addEventListener("input", ()=>{
+      const item = state.items.find(it => it.id === state.selectedId);
+      if(!item) return;
+      item[key] = f[key].value;
+      item.updatedAt = nowISO();
+      upsert(item);
+    });
+  }
+
+  viewBtn.addEventListener("click", ()=> state.selectedId && openModal(state.selectedId));
+  deleteBtn.addEventListener("click", deleteSelected);
+
+  modal.addEventListener("click", (e)=>{
+    if(e.target === modal) closeModal();
+  });
+  mClose.addEventListener("click", closeModal);
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape") closeModal();
+  });
+
+  exportBtn.addEventListener("click", exportJSON);
+  importInput.addEventListener("change", (e)=>{
+    const file = e.target.files?.[0];
+    if(file) importJSON(file);
+    e.target.value = "";
+  });
+  wipeBtn.addEventListener("click", wipeAll);
+
+  // init
+  render();
+})();
+</script>
+</body>
+</html>
